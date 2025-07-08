@@ -77,12 +77,7 @@ class Reseau():
         self.n2x = nx.get_node_attributes(g,"x")
         self.n2y = nx.get_node_attributes(g,"y")
         self.n2t = {}
-        #Initialisation des dossiers de sortie
-        directories = ["","GraphesVisu",
-                       "PotentialErrors","Binarization"]
-        for directory in directories:
-            if not os.path.exists(output_dir+directory):
-                os.mkdir(output_dir+directory)
+        
 
     def __repr__(self) -> str:
         """
