@@ -1,14 +1,14 @@
 """
-Ce fichier contient les définitions des classes Réseau, Brindille et Branche.
-Ces trois classes ont été développées pour analyser les réseaux de champignons
-de Podospora anserina en définissant de manière unique un graphe dynamique pour
-chaque expérience.
-Pour plus de détail, se référer à l'article :
+This file contains the definitions of the Reseau(Network), Brindille(Twig), and Branche(Branch) classes.
+These three classes were developed to analyze the fungal networks
+of Podospora anserina by uniquely defining a dynamic graph for
+each experiment.
+For more details, refer to the article:
 "Full identification of a growing and branching network's spatio-temporal 
-structures", T. Chassereau, F. Chapeland-Leclerc et E. Herbert, 2024-25
+structures," T. Chassereau, F. Chapeland-Leclerc, and E. Herbert, 2025
 
-Version réduite ici qui ne permet pas la reconstruction à partir des images mais 
-permet de travailler avec les objets Reseau pour l'analyse ici souhaitée.
+This is a reduced version that does not allow reconstruction from images but 
+allows you to work with Reseau objects for the analysis desired here.
 """
 
 import numpy as np #For everything
@@ -20,15 +20,13 @@ import pickle #For saving object
 
 class Reseau():
     """
-    Définition de la classe Reseau.
+    Definition of the Reseau class.
     
-    Chaque instance de cette classe regroupe l'ensemble des informations 
-    nécessaires à l'analyse d'une expérience à savoir l'ensemble des images
-    en niveaux de gris au cours du temps, le temps de début d'analyse et
-    d'arrêt, les deux images binarisées correspondantes et le graphe spatial
-    associé à la dernière image.
-    Pour plus d'information sur la génération du graphe spatial, se 
-    référer aux fichiers 'TotalReconstruction.py' et 'Vectorisation.py'.
+    Each instance of this class groups together all the information 
+    needed to analyze an experiment, namely all the grayscale images
+    over time, the start and end times of the analysis,
+    the two corresponding binarized images, and the spatial graph
+    associated with the last image.
     """
     #float|int : Length treshold between 2 nodes over which it is considered false
     SEUIL_LONG:float = 10 # in hyphal diameter unit
@@ -42,7 +40,7 @@ class Reseau():
 
     """
     ===========================================================================
-    Declaration et representation
+    Declaration and representation
     """
     def __init__(self,
                  name:str, #str, name of the experiment
@@ -58,7 +56,7 @@ class Reseau():
                  diameter:float = 7#float, Hyphal diamater in pixels
                  ):
         """
-        Définit l'initialisation d'une instance de Réseau.
+        Defines the initialization of a Reseau instance.
         """
         self.name = name
         self.g = g
@@ -81,8 +79,8 @@ class Reseau():
 
     def __repr__(self) -> str:
         """
-        Définit ce qui s'affiche lorsque qu'on utilise 'print' avec le réseau
-        comme argument.
+        Defines what is displayed when 'print' is used with the network
+        as an argument.
         """
         repr = "\n"
         repr += "-"*80
@@ -108,8 +106,8 @@ class Reseau():
     
     def network_at(self, f):
         """
-        Renvoie le sous réseau g_frame extrait du réseau entier self.g contenant
-        uniquement les points vérifiant t<=f
+        Returns the g_frame subnetwork extracted from the entire self.g network containing
+        only points satisfying t<=f
         """
         g_frame = self.g.copy()
         toKeep = [n for n in g_frame.nodes if self.n2t[n]<=f]
@@ -213,7 +211,7 @@ Brindilles
 """
 class Brindille():
     """
-    Définition de la classe des brindilles.
+    Definition of the Brindille(Twig) class.
     """
     def __init__(self,
                 index:int,
@@ -233,12 +231,12 @@ class Brindille():
         self.confiance = confiance
     
     def __repr__(self) -> str:
-        repr = f"Brindille {self.index} - {len(self.noeuds)} noeuds"
+        repr = f"Brindille {self.index} - {len(self.noeuds)} nodes"
         return repr
     
     def abscisse_curviligne(self)->np.ndarray:
         """
-        Renvoie la liste des abscisses curvilignes des noeuds de la branche
+        Returns the list of curvilinear abscissas of the branch/twig nodes.
         """
         pos = np.array([[self.n2x[n],self.n2y[n]] for n in self.noeuds])
         abscisse = np.sqrt(np.sum((pos[1:,:]-pos[:-1,:])**2,axis=-1))
@@ -248,14 +246,14 @@ class Brindille():
     
     def get_tstart(self)->float:                                        
         """
-        Renvoie la coordonnée t correspondant au début de la brindille.
+        Returns the t coordinate corresponding to the start of the twig.
         """
         tstart = self.n2t[self.noeuds[1]]
         return tstart
 
     def get_tend(self)->float:
         """
-        Renvoie la coordonnée t correspondant à la fin de la brindille.
+        Returns the t coordinate corresponding to the end of the twig.
         """
         tt = [self.n2t[n] for n in self.noeuds]
         tend = np.max(tt)
@@ -263,23 +261,23 @@ class Brindille():
 
     def is_growing_at(self, t:float)->bool:
         """
-        Renvoie si oui ou non la branche est en train de croître 
-        à l'instant t passé en argument.
+        Returns whether or not the branch is growing 
+        at the moment t.
         """
         return self.get_tstart()<=t<=self.get_tend()
     
     def detection_latence(self, seuil:int = 4)->bool:
         """
-        Départ avec latence -> True 
-        Départ sans latence -> False
+        Start with latency -> True 
+        Start without latency -> False
         """
         bLatence = bool(self.get_tstart()-self.n2t[self.noeuds[0]] < seuil)
         return bLatence
     
     def unit_vector(self, end, r = np.inf):
         """
-        Calcule le vecteur unitaire au niveau de l'extrémité spécifiée 
-        mesuré avec un rayon r.
+        Calculates the unit vector at the specified endpoint
+        measured with radius r.
         """
         abscisse = self.abscisse_curviligne()
         if end not in [self.noeuds[0],self.noeuds[-1]]:
@@ -309,7 +307,7 @@ class Brindille():
     
     def calcul_confiance(self, seuil:float)->float:
         """
-        Calcule la confiance dans l'orientation de la brindille
+        Calculates and returns the confidence in twig orientation
         """
         tt = np.array([self.n2t[n] for n in self.noeuds])
         dtt = tt[1:]-tt[:-1]
@@ -437,8 +435,8 @@ Branches
 """
 class Branche(Brindille):
     """
-    Définition de la classe secondaire des branches.
-    Hérite de la classe secondaire des brindilles.
+    Definition of the class Branche(Branch).
+    Inherits from the class Brindille(Twig).
     """
     def __init__(self,
                     index:int, #int, index de la branche
@@ -462,12 +460,12 @@ class Branche(Brindille):
         self.list_overlap = list_overlap if list_overlap else []
     
     def __repr__(self) -> str:
-        repr = f"Branche {self.index} - {len(self.noeuds)} noeuds"
+        repr = f"Branche {self.index} - {len(self.noeuds)} nodes"
         return repr
 
     def grow(self,brindille):
         """
-        Prolongation de la branche par la brindille.
+        Extension of the branch by the given twig.
         """
         self.noeuds = [*self.noeuds,*brindille.noeuds[1:]]
         self.brindilles.append(brindille.index)
@@ -475,11 +473,10 @@ class Branche(Brindille):
 
     def normes_vitesses(self, seuil_lat = 4):
         """
-        Calcule et renvoie les normes des vitesses de la branche et la liste des
-        instants correspondant.
-        seuil_lat permet de ne pas prendre en compte les vitesses lentes
-        due à une latence.
-        Renvoie ([],[]) s'il n'est pas possible de définir une vitesse sur la branche
+        Calculates and returns the branch growth speed norms and the list of
+        corresponding times.
+        seuil_lat allows slow speeds due to latency to be ignored.
+        Returns ([],[]) if it is not possible to define a growth vector on the branch.
         """
         times,vitesses = self.vecteurs_vitesses(seuil_lat = seuil_lat)
         vs = []
@@ -489,11 +486,11 @@ class Branche(Brindille):
 
     def vecteurs_vitesses(self, seuil_lat = 4):
         """
-        Calcule les vecteurs vitesses de croissance de la branche.
-        Renvoie sous la forme d'un tuple la liste des instants t correspondant 
-        et la liste des vecteurs vitesses.
-        Renvoie [] s'il n'est pas possible de définir une vitesse sur la 
-        branche.
+        Calculates the growth vectors for the branch.
+        Returns a tuple containing the list of corresponding times t 
+        and the list of growth vectors.
+        Returns [] if it is not possible to define a rate for the 
+        branch.
         """
         vecteursV = []
         times = []
@@ -519,8 +516,8 @@ class Branche(Brindille):
 
     def positions_vitesses(self):     
         """
-        Renvoie la liste des vecteurs vitesses et des positions 
-        correspondantes de la branche.
+        Returns the list of growth vectors and corresponding positions 
+        of the branch.
         """
         dX,dY,dT = self.n2x,self.n2y,self.n2t
         pos = np.array([[dX[n],dY[n]] for n in self.noeuds])
@@ -552,7 +549,7 @@ class Branche(Brindille):
     
     def apex(self)->list[int]:
         """
-        Renvoie la liste des apex successifs de la branche
+        Returns the list of successive apexes of the branch
         """
         temps = [self.n2t[n] for n in self.noeuds]
         apex = [self.noeuds[i] for i in range(1,len(self.noeuds)-1) if temps[i] < temps[i+1]]
